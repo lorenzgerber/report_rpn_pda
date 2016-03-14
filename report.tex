@@ -19,7 +19,7 @@
 \department{Institution för Datavetenskap}
 \coursename{DV2: Algorithms and Problemsolving 7.5 p}
 \coursecode{DV169VT16}
-\title{OU5 Data Representation}
+\title{OU5 Automaton}
 \author{Lorenz Gerber ({\tt{dv15lgr@cs.umu.se}})} 
 \date{2016-03-21}
 %\revisiondate{2016-01-18}
@@ -61,6 +61,124 @@
 \pagenumbering{arabic}
 
 \section{Introduction} 
+The subject of this assignment was to design and construct Push Down
+Automaton (PDA) as a general datatype and apply it to implement a
+specific PDA that can process input according to \textit{reverse
+  polish notation} (RPN). 
+
+\subsection{Push Down Automata Implementation}
+The lab assignment proposed to use either a representation as table or
+as a graph. It was also communicated that the implementation shall be
+finite and non-deterministic.
+
+The PDA was implemented as a struct with the fields \textbf{current
+  state}, \textbf{current input}, \textbf{stack}, \textbf{table of states}
+
+\section{Program Structure}
+The program was implemented using a conventional C structure with a lean
+main function that first defines and initializes variables, then calls
+for a function that creates and configures the push down
+automaton and finally the applying the command line argument to the
+configured pda.
+
+\subsection{Own Datatypes}
+
+\subsubsection{pda - Push Down Automaton}
+A generic implementation of a push down automaton according to Sipser
+\cite[pp 112-125]{sipser2012}.
+
+\begin{itemize}
+\item current state
+\item current input
+\item register
+\item input alphabet dlist with function pointers
+\item stack
+\item stack alphabet, dlist with function pointers
+\item states table
+\end{itemize}
+
+\begin{itemize}
+\item create
+\item add input alphabet character
+\item add stack alphabet character
+\item add state
+\item add transition
+\item run automaton
+\end{itemize}
+
+The datatype \textit{pda} is constructed from a struct. It contains a
+table (from course datatypes \cite{datatypes}, constructed from
+dynamic list) with \textit{states}, a stack (from course datatypes
+\cite{datatypes}, \textit{stack\_1cell}). The \textit{states} table contains
+the transitions.
+
+\subsubsection{Alphabets}
+The alphabets could be implemented as single chars. Then it is however
+difficult to define a more generic group of chars such as number or
+operator. To provide this possibility an alphabet character could also
+be as a list or an array of unsigned chars. A more elegant way to
+solve this issue would be to define a character by a function,
+implemented through function pointers. This opens up for very flexible
+definition of alphabet characters. For the current implementation it
+was decided to define the alphabet by function pointers and functions.  
+
+\subsubsection{States and Transitions}
+The representation of \textit{state} and \textit{transition} for
+a table based pda can be done in various ways and the distinction
+between \textit{state} and \textit{transition} is less clear than in a
+graph based model. Here two different ways were considered: Either
+states constructed only as a container for transitions, without any 
+reference to the alphabet. This would require a more complex
+transition datatype. Also the datatype transition becomes less generic
+as it fits just for one specified pair of input and stack values.
+
+Alternatively, \textit{states} could also be implemented according to
+the example 2.14 in Sipser \cite[p. 114]{sipser2012}: The state is
+represented by triple nested table or
+an aggregated array where there is a multi column for each letter in
+the input alphabet with subgroups as the individual column for each
+letter of the stack alphabet. Implementing a representation for this
+model could be done with a nested table, an array, where the logic for
+accessing the different levels is integrated in the code or a tree
+structure. Such a representation has the advantage that it is directly
+visible whether a transition for a certain state is already defined or
+not as it has a unique location in the data structure. When choosing a
+representation with states as mere containers for transitions, a
+control mechanism to prevent assignment of duplicate transitions is
+needed. 
+
+
+
+
+A state has an numeric \textit{id} and a table with \textit{id's} of possible
+transitions to proceed along. 
+
+%\begin{table}
+%\caption{\textit{structure of the \textbf{states} datatype}}
+\begin{itemize}
+\item id
+\item description
+\item table with allowed transitions
+\end{itemize}
+%\end{table}
+
+\textit{struct} contains a table constructed from \textit{dynamic
+  list}. The table keys are integers with \textit{structs} as data
+container. 
+
+
+\subsubsection{Transition}
+A transition needs to know whether it matches the current
+state, it needs to define how to modify the current state and the id
+of the new state. 
+\textit{struct} 
+\textit{table} constructed from \textit{dynamic list}. 
+
+pseudo example:
+create automata
+set input alphabet as list of unsigned chars
+set stack alphabet as list of unsigned chars
+set 
 
 \section{Discussion}
 
