@@ -20,7 +20,7 @@
 \coursename{DV2: Algorithms and Problemsolving 7.5 p}
 \coursecode{DV169VT16}
 \title{OU5 Automaton}
-\author{Lorenz Gerber ({\tt{dv15lgr@cs.umu.se}})} 
+\author{Lorenz Gerber ({\tt{dv15lgr@cs.umu.se}} {\tt{lozger03@student.umu.se}})}
 \date{2016-03-21}
 %\revisiondate{2016-01-18}
 \instructor{Lena Kallin Westin / Erik Moström / Jonathan Westin}
@@ -71,12 +71,14 @@ The lab assignment proposed to use either a representation as table or
 as a graph. It was also communicated that the implementation shall be
 finite and non-deterministic.
 
-The PDA was implemented as a struct with the fields \textbf{current
-  state}, \textbf{current input}, \textbf{stack}, \textbf{table of states}
+Here it was decided to use the implementation as a table. To keep the
+implementation as generic as possible it was further decided to
+separate checking the expression calculating it in case it is
+accepted.
 
 \section{Program Structure}
-The program was implemented using a conventional C structure with a lean
-main function that first defines and initializes variables, then calls
+The program was implemented using a conventional C structure with a
+main function that first defines and initializes variables, then calls 
 for a function that creates and configures the push down
 automaton and finally the applying the command line argument to the
 configured pda.
@@ -116,11 +118,15 @@ the transitions.
 The alphabets could be implemented as single chars. Then it is however
 difficult to define a more generic group of chars such as number or
 operator. To provide this possibility an alphabet character could also
-be as a list or an array of unsigned chars. A more elegant way to
+be a list or an array of unsigned chars. A more elegant way to
 solve this issue would be to define a character by a function,
 implemented through function pointers. This opens up for very flexible
 definition of alphabet characters. For the current implementation it
-was decided to define the alphabet by function pointers and functions.  
+was decided to define the alphabet by function pointers and functions.
+
+A general problem in this assignement is the handling of chars and
+integers. A pda should basically stick to symbols however for the \textit{rpn}
+calculation convertion to integers is needed. 
 
 \subsubsection{States and Transitions}
 The representation of \textit{state} and \textit{transition} for
