@@ -92,11 +92,6 @@ Here it was decided to implement the PDA as a table. To keep the
 implementation as generic as possible it was further decided to
 separate `checking the expression' from `calculation'. 
 
-\begin{figure}
- \centering
-  \includegraphics[width=\textwidth]{pda}
-  \caption{Push Down Automata for Reverse Polish Notation.}
-\end{figure}
 
 
 
@@ -163,6 +158,13 @@ states constructed only as a container for transitions, without any
 reference to the alphabet. This requires a more complex
 transition datatype. 
 
+\begin{figure}
+ \centering
+  \includegraphics[width=\textwidth]{pda}
+  \caption{Push Down Automata for Reverse Polish Notation.}
+\end{figure}
+
+
 Alternatively, \textit{states} could also be implemented according to
 the example 2.14 in Sipser \cite[p. 114]{sipser2012}: The state is
 represented by triple nested table or
@@ -185,6 +187,9 @@ transitions. A state has an numeric \textit{id} and a directed list
 with potential transitions to proceed along. The state itself is a
 \textit{struct}.
 
+
+
+
 The interface of the \textit{state} is in the current version very
 sparse. It contains just the function \textit{state\_create} (returns a
 new state) and \textit{state\_addTransition} (to add transitions to the
@@ -199,9 +204,12 @@ struct with function pointers for the \textit{alphabet}
 functions. Further, the transition contains an int of the destination
 state, \textit{destInt} and a char \textit{description}. Note that in
 the current implementation, the transition does not need to know it's
-source state, hence, it can be reused as long as the destination state
-matches. This can be seen in \textit{table \ref{tab:trans}} for
-transition id `3' which is used three times.  
+source state, hence, it could be reused as long as the destination state
+matches. However, after implementing the datatypes, it was found that
+reusing transitions causes problems with the memory free functions: It
+happend that a transition was attempted to be removed multiple
+times causing memory errors. Hence, in the current version, for
+simplicity, instead of reusing, multiple identical transitions were created.  
   
 
 \begin{table}[]
@@ -217,31 +225,31 @@ transition id `3' which is used three times.
   \textit{id} shows the id number of the transition in the C program.}
 \label{tab:trans}
 \begin{tabular}{llllll}
-id & source & destination & read & pop & push \\ \hline
-1  & start  & 1           & e    & e   & \$    \\
-2  & 1      & 1           & B    & e   & e    \\
-3  & 1      & 2           & N    & e   & I    \\
-3  & 2      & 2           & N    & e   & I    \\
-5  & 2      & 3           & B    & e   & I    \\
-4  & 2      & 4           & O    & e   & e    \\
-6  & 2      & 6           & T    & N   & e    \\
-3  & 3      & 2           & N    & e   & I    \\
-14 & 3      & 3           & B    & e   & e    \\
-7  & 3      & 4           & O    & B   & e    \\
-8  & 3      & 6           & T    & B   & e    \\
-9  & 4      & 4           & e    & N   & e    \\
-10 & 4      & 5           & e    & B   & e    \\
-11 & 5      & 3           & e    & e   & B    \\
-12 & 6      & 6           & e    & N   & e    \\
-13 & 6      & 7           & e    & \$   & e   
+id  & source & destination & read & pop & push \\ \hline
+1   & start  & 1           & e    & e   & \$    \\
+2   & 1      & 1           & B    & e   & e    \\
+3\_1 & 1      & 2           & N    & e   & I    \\
+3\_2 & 2      & 2           & N    & e   & I    \\
+5   & 2      & 3           & B    & e   & I    \\
+4   & 2      & 4           & O    & e   & e    \\
+6   & 2      & 6           & T    & N   & e    \\
+3\_3 & 3      & 2           & N    & e   & I    \\
+14  & 3      & 3           & B    & e   & e    \\
+7   & 3      & 4           & O    & B   & e    \\
+8   & 3      & 6           & T    & B   & e    \\
+9   & 4      & 4           & e    & N   & e    \\
+10  & 4      & 5           & e    & B   & e    \\
+11  & 5      & 3           & e    & e   & B    \\
+12  & 6      & 6           & e    & N   & e    \\
+13  & 6      & 7           & e    & \$   & e   
 \end{tabular}
 \end{table}
 
 The interface of the transition contains merely one function of
 interest for the user, \textit{transition\_create}. All further
-functions are used internal to check and apply the transition. This
+functions are used internal to check and apply the transitions. This
 includes three functions to check for epsilon condition in the
-transition (\textit{transition\_checkReadEpsilon,
+transitiona (\textit{transition\_checkReadEpsilon,
   transition\_checkPopEpsilon, transition\_checkPushEpsilon}) and three
 functions that wrap the \textit{alphabet} functions for input, stack
 and push condition. 
@@ -262,9 +270,12 @@ operators and after terminating a number read, blanks are
 disregarded. This behaviour agrees with the implemented rule set in
 the PDA. 
 
+The parsing of \textit{char} type operators into real aritmethic
+operators was inspired by a \textit{Stack Overflow} blog post \cite{lookup}.
+
 \section{Testing}
 A range of different inputs where tested. The testcases can be found
-in table ...
+in \textit{table \ref{tab:test}}.
 
 \begin{table}[]
 \centering
@@ -289,11 +300,35 @@ expression          & expected           & test \\ \hline
 \end{tabular}
 \end{table}
 
-
+\section{Extra Assignment - Bracket Matching}
+After the basic datatypes and the RPN automaton were implemented, it
+was tested how flexible the program would be for another
+automaton. For this reason the \textit{Bracket Matching} automaton was
+implemented. After copying the \textit{main} program of the RPN
+automaton, adjusting took just a few minutes. Basically, three states
+and five transitions had to be set.  Addiontally, three new
+\textit{alphabet} functions had to be written:
+\textit{isOpeningBracket}, \textit{isClosingBracket} and
+\textit{openingBracket}. Finally, the RPN calculation function was removed from
+main. The program uses all the same header files and is available in
+the file \textit{bracket\_automat.c}. For testing, the expressions
+given in the labdescription were used. 
 
 \section{Discussion}
+The chosen design is very flexible for implementing generic automata
+as demonstrated with the \textit{Bracket Matching} automaton. The
+chosen separation of datatypes works well and allows for quick
+reconfiguration of the automaton. It can be argued whether the
+\textit{State} datatype is needed at all. Instead one could include
+also the source state in the transitions. Also the information about
+accepted / non-accepted state could be included in the
+transitions. This would however result in more redundant information
+and the need for validating it to prevent wrong user input.
 
-\section{Conclusions}
+Admittedly, as mentioned in the description to the lab assignment, 
+a grpah would probably have been a more natural basis for this
+datatype. 
+
 
 \addcontentsline{toc}{section}{\refname}
 \bibliography{references}
