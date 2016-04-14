@@ -22,7 +22,7 @@
 \title{OU5 Automata}
 \author{Lorenz Gerber ({\tt{dv15lgr@cs.umu.se}} {\tt{lozger03@student.umu.se}})}
 \date{2016-03-28}
-%\revisiondate{2016-01-18}
+\revisiondate{2016-04-18}
 \instructor{Lena Kallin Westin / Erik Moström / Jonathan Westin}
 
 
@@ -94,14 +94,16 @@ taken.
 Here it was decided to implement the PDA as a table. Initially, this
 was not based on any research but more a `stomach feeling'.  To keep
 the implementation as generic as possible it was further decided to 
-separate checking the expression from calculating it. 
+separate checking the expression from calculating it. Both processes
+where though implemented as PDA's. 
 
 
 \section{Program Structure}
-The main program is used to create and configure the PDA. Hence the
-whole RPN logic is defined in the main program by creating and
-assigning states and transitions. Then the PDA is executed. On
-success, the actual RPN calculation function is called.
+The main program is used to create, configure and execute the
+PDA's. For clarity, the implementation of the PDA and RPN logic was put
+into separate files (\textit{validator.c, validator.h, calculator.c,
+  calculator.h}. As required in the assingment description, the
+program can be compiled by invoking gcc -Wall -std=c99 -o *.c.
 
 \subsection{Datatypes}
 
@@ -135,19 +137,19 @@ Generally speaking, the \textit{input} alphabet includes
 \textit{numbers} and the \textit{dollar symbol} to mark the first
 position in the stack.   
 
-The alphabets were implemented as functions. There are two different
+The alphabets were implemented as functions. There are three different
 types of such alphabet functions: The first kind was used to check
 input and stack for matching letters. In case of a match, those
-functions return \textit{true}, otherwise \textit{false}. The other
+functions return \textit{true}, otherwise \textit{false}. The second
 kind of functions were used to reproduce the letter to be pushed on the
 stack. They return the \textit{ASCII} code of the letter to be pushed. This
 also includes a function that reads the current input letter and  
 returns it.
 
-By separating \textit{recognition} of the input string from
-\textit{calculating} the expression, it was achieved that the pda
-could be kept to operate on single \textit{chars} instead of
-\textit{strings} or multi digit \textit{integers}.  
+The third kind were those used for the actual calculation
+operations. These functions take additionally a pointer to a pda
+struct as argument. Hence, these functions are able to pop and push
+the stack. 
 
 \subsubsection{States}
 The representation of \textit{states} and \textit{transitions} for
@@ -182,17 +184,18 @@ version very sparse. It contains just the functions
 A transition needs to `know' whether it matches the current
 state, it needs to define how to modify the current state and a
 reference to the new/next state. In the current implementation, the
-transition is a \textit{struct} with function pointers for the
-\textit{alphabet} functions. Further, the transition contains an \textit{int}
-of the destination state, \textit{destInt} and a char
-\textit{description}. Note that in the current implementation, the
-transition does not need to know its source state, hence, it could be
-reused as long as the destination state matches. However, after
-implementing the datatypes, it was found that reusing transitions
-causes problems with the memory free functions: It happend that a
-transition was attempted to be removed multiple times causing memory
-errors. Hence, in the current version, for simplicity, instead of
-reusing, multiple identical transitions were created.
+transition is a \textit{struct} with a function pointers for the
+\textit{alphabet} functions and a pointer to a pda struct. Further,
+the transition contains an \textit{int} of the destination state,
+\textit{destInt} and a char \textit{description}. Note that in the
+current implementation, the transition does not need to know its
+source state, hence, it could be reused as long as the destination
+state matches. However, after implementing the datatypes, it was found
+that reusing transitions causes problems with the memory free
+functions: It happend that a transition was attempted to be removed
+multiple times causing memory errors. Hence, in the current version,
+for simplicity, instead of reusing, multiple identical transitions
+were created. 
   
 The interface of the transition contains merely one function of
 interest for the user, \textit{transition\_create}. All further
@@ -203,27 +206,6 @@ transitiona (\textit{transition\_checkReadEpsilon,
 functions that wrap the \textit{alphabet} functions for input, stack
 and push condition. 
 
-\subsubsection{RPN Function}
-As mentioned earlier, it was chosen to separate verification of the
-input by the PDA from the calculation. The calculation is done by the
-function \textit{rpn\_calc}. This function assumes that the input
-statement is a valid RPN expression, hence the input is not
-validated and it should as such just be used in conjunction with the
-PDA datatype.
-
-Compared to the PDA, the stack of the RPN calculator can hold multi
-digit integers. In fact, integers are written to the stack just after
-all their digits read from the input. Composing of multi-digit numbers
-is done by using an `assembly' register and mulitplication by 10 in
-every `round'. Blanks are interpreted as number terminators. In
-beginning of the input, after operators and after terminating a number
-read, blanks are disregarded. This behaviour agrees with the
-implemented rule set in the RPN PDA. 
-
-The parsing of \textit{char} type operators into real aritmethic
-operators was inspired by a \textit{Stack Overflow} blog post using a
-lookup table \cite{lookup}.
-
 \section{RPN Expression Checking}
 
 \begin{figure}
@@ -232,8 +214,9 @@ lookup table \cite{lookup}.
   \caption{\textit{Push Down Automata for Reverse Polish Notation. The small
     case `e' stands for `epsilon', the empty condition. `B' is a blank
   char, `N' any single-digit number char, `O' one of the four base
-  arithmetic operators, `T' is EOF condition and the `\$' symbol is
-  used as marker for an empty stack.}}
+  arithmetic operators, `T' is EOF condition. `I' stands for pushing
+  the Input on the Stack and the `\$' symbol is   used as marker for
+  an empty stack.}} 
   \label{fig:rpn}
 \end{figure}
 
@@ -290,17 +273,17 @@ id  & source & destination & read & pop & push \\ \hline
 2   & 1      & 1           & B    & e   & e    \\
 3\_1 & 1      & 2           & N    & e   & I    \\
 3\_2 & 2      & 2           & N    & e   & I    \\
-5   & 2      & 3           & B    & e   & I    \\
-4   & 2      & 4           & O    & e   & e    \\
-6   & 2      & 6           & T    & N   & e    \\
 3\_3 & 3      & 2           & N    & e   & I    \\
-13  & 3      & 3           & B    & e   & e    \\
+4   & 2      & 4           & O    & e   & e    \\
+5   & 2      & 3           & B    & e   & I    \\
+6   & 2      & 6           & T    & N   & e    \\
 7   & 3      & 4           & O    & B   & e    \\
 8   & 3      & 6           & T    & B   & e    \\
 9   & 4      & 4           & e    & N   & e    \\
 10  & 4      & 5           & e    & B   & B    \\
 11  & 6      & 6           & e    & N   & e    \\
-12  & 6      & 7           & e    & \$   & e   
+12  & 6      & 7           & e    & \$   & e   \\
+13  & 3      & 3           & B    & e   & e    \\
 \end{tabular}
 \end{table}
 
@@ -349,6 +332,23 @@ automaton ends up in the only accepted state.
 Hence, the processing stops when there is no more viable transition to
 take. If the automaton is in a accepted state, the \textit{succeed}
 flag is raised in the \textit{pda} datatype. 
+
+\subsection{RPN Calculation}
+
+\begin{figure}
+ \centering
+  \includegraphics[width=\textwidth]{rpn}
+  \caption{\textit{Push Down like Automata for Reverse Polish Notation 
+calculation. The small case `e' stands for `epsilon', the empty
+condition. `B' is a blank char, `N' any single-digit number char, `O'
+one of the four base arithmetic operators, `T' is EOF condition. `I'
+stands for pushing the Input on the Stack. `C' is for calculation. `A'
+stands for assembling multi-digit numbers and `P' for printing the
+result to the screen.}} 
+  \label{fig:rpn}
+\end{figure}
+
+
 
 
 \subsection{Testing}
